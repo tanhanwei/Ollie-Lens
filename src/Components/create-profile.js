@@ -4,6 +4,15 @@ import { apolloClient } from './apollo-client';
 // @apollo/client/core!
 import { gql } from '@apollo/client'
 
+const request = {
+    
+  handle: "testthw",
+  profilePictureUri: null,   
+  followModule: {
+        emptyFollowModule: true
+    } 
+}
+
 const CREATE_PROFILE = `
   mutation($request: CreateProfileRequest!) { 
     createProfile(request: $request) {
@@ -22,7 +31,7 @@ export const createProfile = (createProfileRequest) => {
    return apolloClient.mutate({
     mutation: gql(CREATE_PROFILE),
     variables: {
-      request: createProfileRequest
+      request: request
     },
   })
 }
