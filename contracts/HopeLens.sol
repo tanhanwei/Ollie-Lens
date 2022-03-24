@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.10;
+pragma solidity >= 0.8.0;
 
 import '@openzeppelin/contracts/token/ERC721/extensions/IERC721Enumerable.sol';
 import 'https://github.com/aave/lens-protocol/blob/main/contracts/libraries/DataTypes.sol';
+import '@chainlink/contracts/src/v0.8/VRFConsumerBase.sol';
 
 ///@title a GiveAway draw luck using Chainlink randomness and Lens API 
 ///@author Mehdi.R
@@ -72,13 +73,16 @@ abstract contract LensHub {
     function getContentURI(uint256 profileId, uint256 pubId) external view returns (string memory);
 }
 
+contract HopeLensGiveAway is VRFConsumerBase{
 
-contract HopeLensGiveAway {
+    bytes32 internal keyHash;
+    uint256 internal fee;
+
+    uint256 public randomResult;
 
     LensHub HopeLens; 
 
     mapping(uint256 => GiveAway[]) listOfGiveAway; 
-
 
     struct GiveAway {
         address creator;
@@ -89,22 +93,56 @@ contract HopeLensGiveAway {
         //address winner; 
     }
 
-     constructor() public {
+    /// CONSTRUCTOR
+
+    /**
+     * Constructor inherits VRFConsumerBase
+     *
+     * Network: Mumbai Testnet
+     * Chainlink VRF Coordinator address: 0x8C7382F9D8f56b33781fE506E897a4F1e2d17255
+     * LINK token address:                0x326C977E6efc84E512bB9C30f76E30c160eD06FB
+     * Key Hash: 0x6e75b569a01ef56d18cab6a8e71e6600d6ce853834d4a5748b720d06f878b3a4
+     */
+
+    //https://docs.chain.link/docs/vrf-contracts/v1/ for addresses
+    constructor() VRFConsumerBase(0x8C7382F9D8f56b33781fE506E897a4F1e2d17255,0x326C977E6efc84E512bB9C30f76E30c160eD06FB) public {
         address proxyAddress = 0xd7B3481De00995046C7850bCe9a5196B7605c367; // LensHub proxy on mumbai testnet
         HopeLens = LensHub(proxyAddress);
         HopeLens.initialize("HopeLens", "HL", msg.sender);
     }
 
-    //function defineWinner()
+    function getRandomResult() public view returns (uint256) {
+        return randomResult;
+    } 
 
-    function createGiveAway(uint256 _amount, uint256 profileId) public returns (GiveAway memory){
+    function getRandomNumber() public returns (bytes32 requestId) {
+        require(
+            LINK.balanceOf(address(this)) >= fee,
+            "Not enough LINK - fill contract with faucet"
+        );
+        return requestRandomness(keyHash, fee);
+    }
+
+    function fulfillRandomness(bytes32 requestId, uint256 randomness)
+        internal
+        override
+    {
+        // get random number between 1 and 1000
+        randomResult = randomness;
+    }
+
+    function createGiveAway(uint256 _amount, uint256 profileId) public view returns (GiveAway memory){
         address creator = msg.sender ;
         GiveAway memory giveAway = GiveAway(creator, profileId, _amount);
         listOfGiveAway[profileId].push(giveAway);
         return giveAway; 
     }
 
-    function defineWinner() ; 
+    function defineWinner() public view returns (address winner) {
+        address 
+
+
+    }; 
 
     function addParticipant() ; 
 
@@ -115,35 +153,5 @@ contract HopeLensGiveAway {
 
    // function Publication(uint256 profileId) public view returns(string[] memory _publication) {}
         
-
-
-
-
-
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
