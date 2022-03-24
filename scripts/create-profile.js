@@ -5,7 +5,7 @@ import { apolloClient } from './apollo-client';
 import { gql } from '@apollo/client'
 
 const request = {
-  handle: "testthw",
+  handle: "testthw2",
   profilePictureUri: null,   
   followModule: {
     emptyFollowModule: true
