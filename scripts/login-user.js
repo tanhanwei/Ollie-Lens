@@ -4,7 +4,7 @@ import { authenticate } from './authenticate'
 
 export const login = async () => {
   // we grab the address of the connected wallet
-    const address = await getAddress();
+  const address = await getAddress();
   
   // we request a challenge from the server
   const challengeResponse = await generateChallenge(address);
@@ -13,7 +13,8 @@ export const login = async () => {
   const signature = await signText(challengeResponse.data.challenge.text)
   
   const accessTokens = await authenticate(address, signature);
-  console.log(accessTokens);
+
+  return accessTokens;
   // you now have the accessToken and the refreshToken
   // {
   //  data: {

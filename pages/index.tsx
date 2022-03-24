@@ -10,6 +10,8 @@ import { login } from "../scripts/login-user";
 
 const Home: NextPage = () => {
   const [isMounted, setIsMounted] = useState(false);
+  const [authData, setAuthData] = useState(null);
+
   const { theme, setTheme } = useTheme();
 
   useEffect(() => {
@@ -39,11 +41,23 @@ const Home: NextPage = () => {
         <div className="flex flex-col">
           <button
             className="bg-indigo-500 p-4 mt-4 rounded-md"
-            onClick={createProfile}
+            onClick={async () => {
+              const response = await createProfile();
+              alert(JSON.stringify(response.data));
+            }}
           >
             Create Profile
           </button>
-          <button className="bg-indigo-500 p-4 mt-4 rounded-md" onClick={login}>
+          <button
+            className="bg-indigo-500 p-4 mt-4 rounded-md"
+            onClick={async () => {
+              const response: any = await login();
+
+              const data = response?.data?.authenticate;
+              localStorage.setItem("auth_token", data?.accessToken);
+              localStorage.setItem("refresh_token", data?.refreshToken);
+            }}
+          >
             Login
           </button>
         </div>

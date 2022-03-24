@@ -5,12 +5,11 @@ import { apolloClient } from './apollo-client';
 import { gql } from '@apollo/client'
 
 const request = {
-    
   handle: "testthw",
   profilePictureUri: null,   
   followModule: {
-        emptyFollowModule: true
-    } 
+    emptyFollowModule: true
+  } 
 }
 
 const CREATE_PROFILE = `
