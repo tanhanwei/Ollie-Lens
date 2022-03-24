@@ -5,12 +5,10 @@ import { useTheme } from "next-themes";
 import Head from "next/head";
 import Image from "next/image";
 
-const Home: NextPage = () => {
-  const createProfile = dynamic(() => import("../scripts/create-profile"), {
-    ssr: false,
-  });
-  const login = dynamic(() => import("../scripts/login-user"), { ssr: false });
+import { createProfile } from "../scripts/create-profile";
+import { login } from "../scripts/login-user";
 
+const Home: NextPage = () => {
   const [isMounted, setIsMounted] = useState(false);
   const { theme, setTheme } = useTheme();
 
