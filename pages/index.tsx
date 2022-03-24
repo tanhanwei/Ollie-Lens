@@ -1,4 +1,5 @@
 import type { NextPage } from 'next'
+import { useRouter } from "next/router";
 import { useLocalStorage } from "usehooks-ts";
 import { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
@@ -7,11 +8,13 @@ import Image from "next/image";
 
 import { createProfile } from "../scripts/create-profile";
 import { login } from "../scripts/login-user";
-import { checkLPPTokenBalance } from "../scripts/ethers-service";
+import { checkLPPTokenBalance, getAddress } from "../scripts/ethers-service";
 
 const Home: NextPage = () => {
   const [isMounted, setIsMounted] = useState(false);
   const [profile, setProfile] = useLocalStorage("profile", {});
+
+  const router = useRouter();
 
   const authToken =
     typeof window !== "undefined" && window.localStorage.getItem("auth_token");
@@ -29,9 +32,12 @@ const Home: NextPage = () => {
   };
 
   useEffect(() => {
-    checkLPPTokenBalance().then((balance) => {
+    checkLPPTokenBalance().then(async (balance) => {
       // Fetch the first profile and set it as default - may need revision
       setProfile(balance[0]);
+
+      const address = await getAddress();
+      router.push("/profiles/" + address);
     });
   }, []);
 
@@ -50,8 +56,7 @@ const Home: NextPage = () => {
         <h1 className="text:2xl">Welcome</h1>
 
         <div className="flex flex-col">
-          {authToken && Object.keys(profile).length > 0 && <p>YOU ROCK</p>}
-          {authToken && Object.keys(profile).length === 0 && (
+          {authToken && (
             <button
               className="bg-indigo-500 p-4 mt-4 rounded-md"
               onClick={async () => {
