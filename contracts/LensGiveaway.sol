@@ -1,63 +1,55 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity >= 0.8.10;
+pragma solidity >= 0.8.0;
 
-import '@openzeppelin/contracts/token/ERC721/extensions/IERC721Enumerable.sol';
-import 'https://github.com/aave/lens-protocol/blob/main/contracts/libraries/DataTypes.sol';
-import "@chainlink/contracts/src/v0.8/interfaces/LinkTokenInterface.sol";
-import "@chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol";
-import "@chainlink/contracts/src/v0.8/VRFConsumerBaseV2.sol";
+//import '@openzeppelin/contracts/token/ERC721/extensions/IERC721Enumerable.sol';
+import '@chainlink/contracts/src/v0.8/VRFConsumerBase.sol';
 import '@openzeppelin/contracts/access/Ownable.sol';
 import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+//import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC721/IERC721.sol";
 
-contract LensGiveaway is VRFConsumerBaseV2{
-    //CHAINLINK STUFF
-    VRFCoordinatorV2Interface COORDINATOR;
-    LinkTokenInterface LINKTOKEN;
+contract LensGiveaway is VRFConsumerBase{
 
-    // Your subscription ID.
-    uint64 s_subscriptionId;
+    bytes32 internal keyHash;
+    uint256 internal fee;
+    uint256 public randomResult;
+    uint256 public random;
 
-    // Rinkeby coordinator. For other networks,
-    // see https://docs.chain.link/docs/vrf-contracts/#configurations
-    address vrfCoordinator = 0x6168499c0cFfCaCD319c818142124B7A15E857ab;
+    /// CONSTRUCTOR
 
-    // Rinkeby LINK token contract. For other networks,
-    // see https://docs.chain.link/docs/vrf-contracts/#configurations
-    address link = 0x01BE23585060835E02B77ef475b0Cc51aA1e0709;
+    /**
+     * Constructor inherits VRFConsumerBase
+     *
+     * Network: Mumbai Testnet
+     * Chainlink VRF Coordinator address: 0x8C7382F9D8f56b33781fE506E897a4F1e2d17255
+     * LINK token address:                0x326C977E6efc84E512bB9C30f76E30c160eD06FB
+     * Key Hash: 0x6e75b569a01ef56d18cab6a8e71e6600d6ce853834d4a5748b720d06f878b3a4
+     */
 
-    // The gas lane to use, which specifies the maximum gas price to bump to.
-    // For a list of available gas lanes on each network,
-    // see https://docs.chain.link/docs/vrf-contracts/#configurations
-    bytes32 keyHash = 0xd89b2bf150e3b9e13446986e571fb9cab24b13cea0a43ea20a6049a85cc807cc;
-
-    // Depends on the number of requested values that you want sent to the
-    // fulfillRandomWords() function. Storing each word costs about 20,000 gas,
-    // so 100,000 is a safe default for this example contract. Test and adjust
-    // this limit based on the network that you select, the size of the request,
-    // and the processing of the callback request in the fulfillRandomWords()
-    // function.
-    uint32 callbackGasLimit = 100000;
-
-    // The default is 3, but you can set this higher.
-    uint16 requestConfirmations = 3;
-
-    // For this example, retrieve 2 random values in one request.
-    // Cannot exceed VRFCoordinatorV2.MAX_NUM_WORDS.
-    uint32 numWords =  2;
-
-    uint256[] public s_randomWords;
-    //uint256 public s_requestId;
-    //address s_owner;
-
-      constructor(uint64 subscriptionId) VRFConsumerBaseV2(vrfCoordinator) {
-        COORDINATOR = VRFCoordinatorV2Interface(vrfCoordinator);
-        LINKTOKEN = LinkTokenInterface(link);
-        //s_owner = msg.sender;
-        s_subscriptionId = subscriptionId;
+     //https://docs.chain.link/docs/vrf-contracts/v1/ for addresses
+    constructor() VRFConsumerBase(0x8C7382F9D8f56b33781fE506E897a4F1e2d17255,0x326C977E6efc84E512bB9C30f76E30c160eD06FB) public {
+        address proxyAddress = 0xd7B3481De00995046C7850bCe9a5196B7605c367; // LensHub proxy on mumbai testnet
+        //HopeLens = LensHub(proxyAddress);
+        //HopeLens.initialize("HopeLens", "HL", msg.sender);
     }
+
+    function getRandomNumber() public returns (bytes32 requestId) {
+        require(
+            LINK.balanceOf(address(this)) >= fee,
+            "Not enough LINK - fill contract with faucet"
+        );
+        return requestRandomness(keyHash, fee);
+    }
+
+    function fulfillRandomness(bytes32 requestId, uint256 randomness)
+        internal
+        override
+    {
+        // get random number 
+        randomness;
+    }
+    
 
     //ORGANIZER
     struct Giveaway {
@@ -164,9 +156,8 @@ contract LensGiveaway is VRFConsumerBaseV2{
         address winnerAddress;
         require(msg.sender == organizer, "Unauthorized, sender is not the organizer");
 
-        uint256 randomWord = requestRandomWords();
 
-        winnerIndex = randomWord % profileGiveaway[organizer].giveawayList[giveawayId].participants.length;
+        winnerIndex = random % profileGiveaway[organizer].giveawayList[giveawayId].participants.length;
         winnerAddress = profileGiveaway[organizer].giveawayList[giveawayId].participants[winnerIndex];
         
         //setWinner
@@ -174,35 +165,15 @@ contract LensGiveaway is VRFConsumerBaseV2{
         profileGiveaway[organizer].giveawayList[giveawayId].ended = true;
 
         return winnerAddress;
-    }
-
-    function requestRandomWords() public returns(uint256){
-        //changed s_requestId to a temp variable
-        uint256 s_requestId = COORDINATOR.requestRandomWords(
-        keyHash,
-        s_subscriptionId,
-        requestConfirmations,
-        callbackGasLimit,
-        numWords
-        );
-
-        return s_requestId;
-    }
     
-    function fulfillRandomWords(
-        uint256, /* requestId */
-        uint256[] memory randomWords
-    ) internal override {
-        s_randomWords = randomWords;
     }
+
 
     function getLatestGiveawayIndex(address organizer) public view returns (uint256){
         return profileGiveaway[organizer].giveawayList.length;
     }
 
-    function setNumWords (uint32 number) public {
-        numWords = number;
-    }
+   
 
     //-------------------------CHECK GIVEAWAY STATUS---------------------------------
 
@@ -230,4 +201,3 @@ contract LensGiveaway is VRFConsumerBaseV2{
     }
     
 }
-
