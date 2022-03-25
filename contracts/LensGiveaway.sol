@@ -59,7 +59,7 @@ contract LensGiveaway is VRFConsumerBaseV2{
         s_subscriptionId = subscriptionId;
     }
 
-    //GIVEAWAY
+    //ORGANIZER
     struct Giveaway {
         Prize prize; //type of prize
         Condition condition; //giveaway conditions
@@ -78,6 +78,9 @@ contract LensGiveaway is VRFConsumerBaseV2{
 
         //giveaway status
         bool ended;
+
+        //claim status
+        bool claimed;
         
     }
 
@@ -98,22 +101,48 @@ contract LensGiveaway is VRFConsumerBaseV2{
 
     mapping(address => ProfileGiveaway) private profileGiveaway;
 
-    //Organizer aka "giver" can create
+    //PARTICIPANTS
+    struct Participations {
+        GiveawayJoined[] giveawayJoined;
+    }
+
+    struct GiveawayJoined {
+        address organizer;
+        uint256 giveawayId;
+        bool isWinner;
+    }
+
+    mapping(address => Participations) participations;
+
+    //-----------------------------ORGANIZER START A GIVEAWAY-----------------------------------
+
     function addGiveaway (Prize prize, Condition memory condition, uint deadline, uint cost, uint256 amount, address nftScAddress, uint nftTokenId) public payable returns (uint256){
         address organizer = msg.sender;
         Giveaway memory giveaway;
-        giveaway = Giveaway({prize:prize, condition:condition, deadline:deadline, cost:cost, amount:amount, nftScAddress:nftScAddress, nftTokenId:nftTokenId, participants: new address[](0), winner: address(0), randomIndex:0, ended: false});
+        giveaway = Giveaway({prize:prize, condition:condition, deadline:deadline, cost:cost, amount:amount, nftScAddress:nftScAddress, nftTokenId:nftTokenId, participants: new address[](0), winner: address(0), randomIndex:0, ended: false, claimed:false});
 
         profileGiveaway[organizer].giveawayList.push(giveaway);
+        
+        //Payment for Prize
+        require( msg.value >= amount);
 
         return profileGiveaway[organizer].giveawayList.length; //returns giveawayId
     }
 
+    //--------------------------------PARTICIPANTS JOIN A GIVEAWAY---------------------------
+
     function addParticipant (address organizer, uint giveawayId, uint256 amount) public payable {
         //TODO: check participation condition
+        //update organizer's mapping
         require (amount >= profileGiveaway[organizer].giveawayList[giveawayId].cost, "Amount less than cost");
         require (!isCurrentParticipant(organizer, giveawayId, msg.sender), "Existing participant");
         profileGiveaway[organizer].giveawayList[giveawayId].participants.push(msg.sender);
+
+        //update participant's mapping
+        GiveawayJoined memory joining;
+        joining = GiveawayJoined({organizer:organizer, giveawayId:giveawayId, isWinner:false});
+
+        participations[msg.sender].giveawayJoined.push(joining);
     }
 
     function isCurrentParticipant(address organizer, uint giveawayId, address participant) public view returns (bool){
@@ -128,7 +157,9 @@ contract LensGiveaway is VRFConsumerBaseV2{
         return condition;
     }
 
- function selectWinner(address organizer, uint giveawayId) public payable returns (address){
+    //----------------------------------END GIVEAWAY BY DRAWING----------------------------------------
+
+    function selectWinner(address organizer, uint giveawayId) public payable returns (address){
         uint256 winnerIndex;
         address winnerAddress;
         require(msg.sender == organizer, "Unauthorized, sender is not the organizer");
@@ -173,6 +204,8 @@ contract LensGiveaway is VRFConsumerBaseV2{
         numWords = number;
     }
 
+    //-------------------------CHECK GIVEAWAY STATUS---------------------------------
+
     function getParticipants (address organizer, uint giveawayId) public view returns (address[] memory) {
         return profileGiveaway[organizer].giveawayList[giveawayId].participants;
     }
@@ -180,6 +213,20 @@ contract LensGiveaway is VRFConsumerBaseV2{
     function getWinner(address organizer, uint giveawayId) public view returns (address) {
         require (profileGiveaway[organizer].giveawayList[giveawayId].ended, "Giveaway not ended");
         return profileGiveaway[organizer].giveawayList[giveawayId].winner;
+    }
+
+    //-------------------------PRIZE CLAIMING--------------------------------------
+    function getMyEntries() public view returns (Participations memory){
+        return participations[msg.sender];
+    }
+
+    function withdrawMyMaticPrize(address organizer, uint giveawayId) public payable {
+        uint256 prizeAmount;
+        
+        require(msg.sender == profileGiveaway[organizer].giveawayList[giveawayId].winner, "Invalid claim");
+        prizeAmount = profileGiveaway[organizer].giveawayList[giveawayId].amount;
+        require(payable(msg.sender).send(prizeAmount));
+        profileGiveaway[organizer].giveawayList[giveawayId].claimed = true;
     }
     
 }
