@@ -157,7 +157,8 @@ contract LensGiveaway is VRFConsumerBase{
         require(msg.sender == organizer, "Unauthorized, sender is not the organizer");
 
 
-        winnerIndex = random % profileGiveaway[organizer].giveawayList[giveawayId].participants.length;
+        //winnerIndex = random % profileGiveaway[organizer].giveawayList[giveawayId].participants.length;
+        winnerIndex = generateRandom(organizer, giveawayId) % profileGiveaway[organizer].giveawayList[giveawayId].participants.length;
         winnerAddress = profileGiveaway[organizer].giveawayList[giveawayId].participants[winnerIndex];
         
         //setWinner
@@ -198,6 +199,14 @@ contract LensGiveaway is VRFConsumerBase{
         prizeAmount = profileGiveaway[organizer].giveawayList[giveawayId].amount;
         require(payable(msg.sender).send(prizeAmount));
         profileGiveaway[organizer].giveawayList[giveawayId].claimed = true;
+    }
+
+    function generateRandom(address organizer, uint giveawayId) private view returns (uint) {
+        // sha3 and now have been deprecated
+
+        return uint(keccak256(abi.encodePacked(block.difficulty, block.timestamp, profileGiveaway[organizer].giveawayList[giveawayId].participants)));
+        // convert hash to integer
+      
     }
     
 }
