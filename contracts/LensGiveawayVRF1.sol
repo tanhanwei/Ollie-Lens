@@ -9,7 +9,7 @@ import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
 //import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC721/IERC721.sol";
 
-contract LensGiveaway is VRFConsumerBase{
+contract LensGiveaway {
 
     bytes32 internal keyHash;
     uint256 internal fee;
@@ -26,6 +26,7 @@ contract LensGiveaway is VRFConsumerBase{
      * LINK token address:                0x326C977E6efc84E512bB9C30f76E30c160eD06FB
      * Key Hash: 0x6e75b569a01ef56d18cab6a8e71e6600d6ce853834d4a5748b720d06f878b3a4
      */
+/*
 
      //https://docs.chain.link/docs/vrf-contracts/v1/ for addresses
     constructor() VRFConsumerBase(0x8C7382F9D8f56b33781fE506E897a4F1e2d17255,0x326C977E6efc84E512bB9C30f76E30c160eD06FB) public {
@@ -49,6 +50,7 @@ contract LensGiveaway is VRFConsumerBase{
         // get random number 
         randomness;
     }
+*/
     
 
     //ORGANIZER
@@ -158,7 +160,8 @@ contract LensGiveaway is VRFConsumerBase{
 
 
         //winnerIndex = random % profileGiveaway[organizer].giveawayList[giveawayId].participants.length;
-        winnerIndex = generateRandom(organizer, giveawayId) % profileGiveaway[organizer].giveawayList[giveawayId].participants.length;
+        
+        winnerIndex = generateWinnerIndex(organizer, giveawayId);
         winnerAddress = profileGiveaway[organizer].giveawayList[giveawayId].participants[winnerIndex];
         
         //setWinner
@@ -177,6 +180,9 @@ contract LensGiveaway is VRFConsumerBase{
    
 
     //-------------------------CHECK GIVEAWAY STATUS---------------------------------
+    function getNoOfParticipants(address organizer, uint giveawayId) public view returns (uint256) {
+        return profileGiveaway[organizer].giveawayList[giveawayId].participants.length;
+    }
 
     function getParticipants (address organizer, uint giveawayId) public view returns (address[] memory) {
         return profileGiveaway[organizer].giveawayList[giveawayId].participants;
@@ -186,6 +192,18 @@ contract LensGiveaway is VRFConsumerBase{
         require (profileGiveaway[organizer].giveawayList[giveawayId].ended, "Giveaway not ended");
         return profileGiveaway[organizer].giveawayList[giveawayId].winner;
     }
+
+    function generateRandom(address organizer, uint giveawayId) public view returns (uint) {
+        // sha3 and now have been deprecated
+
+        return uint(keccak256(abi.encodePacked(block.difficulty, block.timestamp, profileGiveaway[organizer].giveawayList[giveawayId].participants)));
+        // convert hash to integer
+    }
+
+    function generateWinnerIndex(address organizer, uint giveawayId) public view returns (uint256) {
+        return generateRandom(organizer, giveawayId) % profileGiveaway[organizer].giveawayList[giveawayId].participants.length;
+    }
+
 
     //-------------------------PRIZE CLAIMING--------------------------------------
     function getMyEntries() public view returns (Participations memory){
@@ -201,12 +219,6 @@ contract LensGiveaway is VRFConsumerBase{
         profileGiveaway[organizer].giveawayList[giveawayId].claimed = true;
     }
 
-    function generateRandom(address organizer, uint giveawayId) private view returns (uint) {
-        // sha3 and now have been deprecated
-
-        return uint(keccak256(abi.encodePacked(block.difficulty, block.timestamp, profileGiveaway[organizer].giveawayList[giveawayId].participants)));
-        // convert hash to integer
-      
-    }
+    
     
 }
