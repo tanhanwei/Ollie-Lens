@@ -1,34 +1,35 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Lens API
 
-## Getting Started
+This repo has running code which you can execute to help you understand how to interact with the Lens API.
 
-First, run the development server:
+Lens API is beta at the moment and can change without warning!
 
-```bash
-npm run dev
-# or
-yarn dev
+Full documentation is available at [https://docs.lens.dev/docs/introduction](https://docs.lens.dev/docs/introduction).
+
+## Setup
+
+for the scripts to run you need to create a `.env` (or copy the template `cp .env.template .env`) file with these variables:
+
+```
+PK=YOUR_PK
+MUMBAI_RPC_URL=https://rpc-mumbai.matic.today
+PROFILE_ID=PROFILE_ID
+LENS_API=https://api-mumbai.lens.dev/
+LENS_HUB_CONTRACT=0xd7B3481De00995046C7850bCe9a5196B7605c367
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+note `PROFILE_ID` is optional but required on some endpoints!
 
-You can start editing the page by modifying `pages/index.tsx`. The page auto-updates as you edit the file.
+## How to run
 
-[API routes](https://nextjs.org/docs/api-routes/introduction) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.ts`.
+look in the `package.json` file for the `scripts` section you see all the scripts you can run. This is prefixed with `resolver:method`.
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/api-routes/introduction) instead of React pages.
+example running:
 
-## Learn More
+```bash
+$ npm run authentication:login
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Issues
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+If you have any issues with the API or want a new endpoint please create an issue!
